@@ -1,7 +1,9 @@
+import os
 from flask import Flask, jsonify, request
 from extensions import db, ma, jwt
 from flask_migrate import Migrate
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from flask_cors import CORS
 
 # IMPORT ORDER MATTERS HERE — models BEFORE schemas.
 # A Marshmallow SQLAlchemyAutoSchema inspects its model the moment the schema
@@ -23,14 +25,16 @@ from schemas.tag_schema import tag_schema, tags_schema
 
 app = Flask(__name__)
 # Configure the database URI (replace with your actual database URI)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///books.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///books.db').replace("postgres://", "postgresql://")  # Fix for SQLAlchemy compatibility with Heroku Postgres
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = 'your_jwt_secret_key'  # Change this to a secure key in production
+
 
 # Initialize the database with the Flask app
 db.init_app(app)
 ma.init_app(app)
 jwt.init_app(app)
+CORS(app, origins=["*"])  # Enable CORS for all routes
 
 
 # initialize Flask-Migrate with the app and database
